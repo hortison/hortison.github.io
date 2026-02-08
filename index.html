@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>James Horton - Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Custom Styles for Flip Effect -->
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .preserve-3d { transform-style: preserve-3d; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans selection:bg-blue-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons Components (Inline SVGs) ---
+        const Github = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        );
+        const Linkedin = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+        );
+        const Mail = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        );
+        const Server = ({ size = 24, className }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+        );
+        const Cloud = ({ size = 24, className }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+        );
+        const Terminal = ({ size = 24, className }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+        );
+        const Award = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+        );
+        const ExternalLink = ({ size = 14 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        );
+        const MapPin = ({ size = 24, className }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        );
+
+        // --- Main Portfolio Component ---
+        const Portfolio = () => {
+            const [activeSection, setActiveSection] = useState('about');
+            const [isScrolled, setIsScrolled] = useState(false);
+
+            // Handle scroll for navbar styling
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 50);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const experience = [
+                {
+                    company: "Layer5",
+                    role: "Senior Solutions Consultant",
+                    period: "July 2020 - Present",
+                    location: "Remote",
+                    description: "Using Kanvas and Meshery to help organizations overcome engineering silos and collaborate in managing their apps and infra. Driving collaborative configuration management for Kubernetes, Docker, and Cloud environments.",
+                    link: "https://layer5.io"
+                },
+                {
+                    company: "Horton Consulting",
+                    role: "Consultant",
+                    period: "Feb 2020 - Present",
+                    location: "New York City Metropolitan Area",
+                    description: "Freelance consulting with startups and Fortune 2,000s, focusing on infrastructure design and cloud strategies."
+                },
+                {
+                    company: "Hewlett Packard Enterprise",
+                    role: "Senior Solutions Architect",
+                    period: "Nov 2017 - Feb 2020",
+                    location: "Greater New York City Area",
+                    description: "Designed solutions with Greenlake and third-party infrastructure in different public clouds. Pushed customers toward public marketplace solutions and modern design patterns."
+                },
+                {
+                    company: "VertX Solutions",
+                    role: "Software Engineer",
+                    period: "Feb 2013 - Jan 2016",
+                    location: "New York",
+                    description: "Worked on product design and coding product features. Participated in scrum teams practicing SAFe agile methodologies."
+                },
+                {
+                    company: "ADP",
+                    role: "Database Application Developer",
+                    period: "Apr 2009 - Jan 2013",
+                    location: "New Jersey",
+                    description: "Managed major migration projects for branch servers and cashier applications. Handled International Bank Transaction projects."
+                }
+            ];
+
+            const skills = [
+                "Kubernetes", "Amazon EKS", "Azure AKS", "Google GKE", 
+                "Docker", "Infrastructure as Code", "Service Mesh", 
+                "Meshery", "Network Engineering", "ITIL & ITSM"
+            ];
+
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-200">
+                
+                {/* Navigation */}
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
+                    <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900">James Horton<span className="text-blue-600">.</span></h1>
+                    <div className="hidden md:flex gap-8 text-sm font-medium text-slate-600">
+                        <a href="#about" className="hover:text-blue-600 transition-colors">About</a>
+                        <a href="#experience" className="hover:text-blue-600 transition-colors">Experience</a>
+                        <a href="#skills" className="hover:text-blue-600 transition-colors">Skills</a>
+                        <a href="mailto:james.horton@layer5.io" className="px-4 py-2 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors">Contact Me</a>
+                    </div>
+                    </div>
+                </nav>
+
+                {/* Hero Section */}
+                <header id="about" className="pt-32 pb-20 px-6 lg:pt-48 lg:pb-32">
+                    <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+                    <div className="order-2 md:order-1 space-y-6">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide">
+                        <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                        Open Networker (LION)
+                        </div>
+                        <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 leading-tight">
+                        Infrastructure as <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Design.</span>
+                        </h1>
+                        <p className="text-lg text-slate-600 max-w-lg leading-relaxed">
+                        I bring together internal technologies with external Cloud and on-premise systems to engineer robust solutions. Specializing in the internal customer experience.
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-4 pt-4">
+                        <a href="https://github.com/hortison" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                            <Github size={20} />
+                            <span>GitHub</span>
+                        </a>
+                        <a href="https://www.linkedin.com/in/james-horton-7a7b57139/" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-lg hover:border-blue-200 hover:text-blue-600 transition-all hover:-translate-y-1">
+                            <Linkedin size={20} />
+                            <span>LinkedIn</span>
+                        </a>
+                        </div>
+                    </div>
+
+                    {/* Profile Image with Flip Effect */}
+                    <div className="order-1 md:order-2 flex justify-center perspective-1000 group cursor-pointer">
+                        <div className="relative w-72 h-72 md:w-96 md:h-96 transition-all duration-700 transform group-hover:rotate-y-180 preserve-3d">
+                        
+                        {/* Front: Professional */}
+                        <div className="absolute inset-0 backface-hidden">
+                            <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-slate-100">
+                            <img 
+                                src="james horton.jpeg" 
+                                alt="James Horton Professional" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {e.target.src='https://ui-avatars.com/api/?name=James+Horton&background=0D8ABC&color=fff&size=500'}}
+                            />
+                            </div>
+                            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-lg">
+                            <p className="text-xs font-bold text-slate-500 uppercase">Professional</p>
+                            <p className="font-semibold text-slate-900">James Horton</p>
+                            </div>
+                        </div>
+
+                        {/* Back: Fun/Avatar */}
+                        <div className="absolute inset-0 rotate-y-180 backface-hidden">
+                            <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-blue-500 bg-yellow-400">
+                            <img 
+                                src="hortison.jpeg" 
+                                alt="Hortison Avatar" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {e.target.src='https://ui-avatars.com/api/?name=Hortison&background=random&size=500'}}
+                            />
+                            </div>
+                            <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur px-4 py-2 rounded-lg shadow-lg">
+                            <p className="text-xs font-bold text-yellow-400 uppercase">Alter Ego</p>
+                            <p className="font-semibold text-white">@hortison</p>
+                            </div>
+                        </div>
+
+                        </div>
+                    </div>
+                    </div>
+                </header>
+
+                {/* Skills Section */}
+                <section id="skills" className="py-20 bg-white border-y border-slate-100">
+                    <div className="max-w-6xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row md:items-start gap-12">
+                        <div className="md:w-1/3">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">Technical Proficiency</h2>
+                        <p className="text-slate-600 mb-6">
+                            From on-premise legacy systems to cutting-edge cloud native architectures, I've spent time in almost every IT role.
+                        </p>
+                        <div className="flex items-center gap-2 text-blue-600 font-semibold">
+                            <Award size={20} />
+                            <span>National Merit Finalist</span>
+                        </div>
+                        </div>
+                        <div className="md:w-2/3">
+                        <div className="flex flex-wrap gap-3">
+                            {skills.map((skill, index) => (
+                            <span key={index} className="px-5 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium hover:border-blue-400 hover:text-blue-600 hover:shadow-md transition-all cursor-default">
+                                {skill}
+                            </span>
+                            ))}
+                        </div>
+                        
+                        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="p-4 bg-slate-50 rounded-lg text-center">
+                                <Cloud className="mx-auto text-blue-500 mb-2" />
+                                <span className="text-sm font-bold text-slate-700">Cloud Native</span>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-lg text-center">
+                                <Server className="mx-auto text-indigo-500 mb-2" />
+                                <span className="text-sm font-bold text-slate-700">Infrastructure</span>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-lg text-center">
+                                <Terminal className="mx-auto text-emerald-500 mb-2" />
+                                <span className="text-sm font-bold text-slate-700">DevOps</span>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-lg text-center">
+                                <MapPin className="mx-auto text-red-500 mb-2" />
+                                <span className="text-sm font-bold text-slate-700">NYC Metro</span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Experience Section */}
+                <section id="experience" className="py-24 max-w-4xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold text-slate-900">Professional Experience</h2>
+                    <p className="text-slate-500 mt-2">A timeline of my journey in technology</p>
+                    </div>
+
+                    <div className="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                    {experience.map((job, index) => (
+                        <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        
+                        {/* Timeline Dot */}
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 group-hover:bg-blue-600 transition-colors shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-slate-400 group-hover:bg-white transition-colors"></div>
+                        </div>
+                        
+                        {/* Content Card */}
+                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                            <h3 className="font-bold text-lg text-slate-900">{job.role}</h3>
+                            <span className="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-700 rounded-md whitespace-nowrap">{job.period}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-4 text-slate-500 text-sm font-medium">
+                            <span>{job.company}</span>
+                            <span>•</span>
+                            <span>{job.location}</span>
+                            </div>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                            {job.description}
+                            </p>
+                            {job.link && (
+                            <a href={job.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue-600 text-sm font-medium mt-3 hover:underline">
+                                Visit Layer5 <ExternalLink size={14} />
+                            </a>
+                            )}
+                        </div>
+                        </div>
+                    ))}
+                    </div>
+                </section>
+
+                {/* Education */}
+                <section className="py-20 bg-slate-900 text-slate-300">
+                    <div className="max-w-6xl mx-auto px-6">
+                    <h2 className="text-2xl font-bold text-white mb-8">Education & Certifications</h2>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
+                        <h3 className="text-white font-bold text-lg mb-1">University of California, Los Angeles</h3>
+                        <p className="text-blue-400 text-sm mb-4">Bachelor's degree, Information Technology (1998-2001)</p>
+                        </div>
+                        <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
+                        <h3 className="text-white font-bold text-lg mb-1">Microsoft Certified Systems Administrator</h3>
+                        <p className="text-blue-400 text-sm mb-4">MCSA Certification</p>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className="bg-slate-950 py-12 border-t border-slate-900">
+                    <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="text-center md:text-left">
+                        <h2 className="text-xl font-bold text-white">James Horton</h2>
+                        <p className="text-slate-500 text-sm mt-1">Senior Solutions Consultant</p>
+                    </div>
+                    
+                    <div className="flex gap-6">
+                        <a href="mailto:james.horton@layer5.io" className="text-slate-400 hover:text-white transition-colors">
+                            <Mail size={24} />
+                        </a>
+                        <a href="https://github.com/hortison" className="text-slate-400 hover:text-white transition-colors">
+                            <Github size={24} />
+                        </a>
+                        <a href="https://www.linkedin.com/in/james-horton-7a7b57139/" className="text-slate-400 hover:text-white transition-colors">
+                            <Linkedin size={24} />
+                        </a>
+                    </div>
+
+                    <div className="text-slate-600 text-sm">
+                        © {new Date().getFullYear()} James Horton. All rights reserved.
+                    </div>
+                    </div>
+                </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Portfolio />);
+    </script>
+</body>
+</html>
